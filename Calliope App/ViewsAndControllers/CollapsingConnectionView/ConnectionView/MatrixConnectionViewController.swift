@@ -148,11 +148,12 @@ class MatrixConnectionViewController: UIViewController, CollapsingViewController
 			|| self.calliopeWithCurrentMatrix == nil && self.connector.state == .discoveredAll {
 			connector.startCalliopeDiscovery()
 		} else if let calliope = self.calliopeWithCurrentMatrix {
-			if calliope.state == .discovered || calliope.state == .willReset {
-				calliope.updateBlock = updateDiscoveryState
+            if calliope.state == .discovered || calliope.state == .willReset || calliope.state == .offline {
+                calliope.updateBlock = updateDiscoveryState
                 calliope.errorBlock = error
 				LogNotify.log("Matrix view connecting to \(calliope)")
-				connector.connectToCalliope(calliope)
+                if calliope.state == .offline { calliope.state = .discovered }
+                connector.connectToCalliope(calliope)
 			} else if calliope.state == .connected {
 				calliope.evaluateMode()
 			} else {
@@ -177,7 +178,7 @@ class MatrixConnectionViewController: UIViewController, CollapsingViewController
 		case .discovering, .discovered:
 			if let calliope = self.calliopeWithCurrentMatrix {
 				evaluateCalliopeState(calliope)
-                if (connectButton.connectionState == .readyToConnect) {
+                if connectButton.connectionState == .readyToConnect {
                     connect()
                 }
 			} else {
@@ -188,6 +189,14 @@ class MatrixConnectionViewController: UIViewController, CollapsingViewController
 		case .discoveredAll:
 			if let matchingCalliope = calliopeWithCurrentMatrix {
 				evaluateCalliopeState(matchingCalliope)
+                if connectButton.connectionState == .readyToConnect {
+                    if matchingCalliope.state == .offline {
+                        LogNotify.log("not auto connecting to \(matchingCalliope)")
+                    }
+                    else {
+                        connect()
+                    }
+                }
 			} else {
 				matrixView.isUserInteractionEnabled = true
 				connectButton.connectionState = .notFoundRetry
@@ -228,27 +237,27 @@ class MatrixConnectionViewController: UIViewController, CollapsingViewController
 		}
 
 		switch calliope.state {
-		case .discovered:
-			matrixView.isUserInteractionEnabled = !reconnecting
-			connectButton.connectionState = reconnecting ? .testingMode : .readyToConnect
-		case .connected:
-			reconnecting = false
-			attemptReconnect = false
-			matrixView.isUserInteractionEnabled = false
-			connectButton.connectionState = .testingMode
-		case .evaluateMode:
-			matrixView.isUserInteractionEnabled = false
-			connectButton.connectionState = .testingMode
-		case .usageReady:
-			matrixView.isUserInteractionEnabled = true
-			connectButton.connectionState = .readyToPlay
-		case .wrongMode:
-			matrixView.isUserInteractionEnabled = true
-			connectButton.connectionState = .wrongProgram
-		case .willReset:
-			matrixView.isUserInteractionEnabled = false
-			attemptReconnect = true
-			connectButton.connectionState = .testingMode
+            case .offline, .discovered:
+                matrixView.isUserInteractionEnabled = !reconnecting
+                connectButton.connectionState = reconnecting ? .testingMode : .readyToConnect
+            case .connected:
+                reconnecting = false
+                attemptReconnect = false
+                matrixView.isUserInteractionEnabled = false
+                connectButton.connectionState = .testingMode
+            case .evaluateMode:
+                matrixView.isUserInteractionEnabled = false
+                connectButton.connectionState = .testingMode
+            case .usageReady:
+                matrixView.isUserInteractionEnabled = true
+                connectButton.connectionState = .readyToPlay
+            case .wrongMode:
+                matrixView.isUserInteractionEnabled = true
+                connectButton.connectionState = .wrongProgram
+            case .willReset:
+                matrixView.isUserInteractionEnabled = false
+                attemptReconnect = true
+                connectButton.connectionState = .testingMode
 		}
 	}
 
