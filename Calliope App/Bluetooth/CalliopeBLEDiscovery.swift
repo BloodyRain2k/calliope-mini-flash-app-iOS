@@ -23,23 +23,6 @@ class CalliopeBLEDiscovery: NSObject, CBCentralManagerDelegate {
 	var updateQueue = DispatchQueue.main
 	var updateBlock: () -> () = {}
     var errorBlock: (Error) -> () = {_ in }
-    
-    static var instances: [CalliopeBLEDiscovery] = []
-    private static var _lastInstance: CalliopeBLEDiscovery?
-
-    private func setLastInstance(_ overwrite: Bool = true) {
-        if (!overwrite && CalliopeBLEDiscovery._lastInstance != nil) { return }
-        CalliopeBLEDiscovery._lastInstance = self
-        LogNotify.log("changed last to #\(CalliopeBLEDiscovery.instances.firstIndex(of: self) ?? -1)")
-    }
-    
-    private func clearLastInstance() { CalliopeBLEDiscovery._lastInstance = nil }
-    
-    static var lastInstance: CalliopeBLEDiscovery? {
-        get {
-            return CalliopeBLEDiscovery._lastInstance
-        }
-    }
 
 	var calliopeBuilder: (_ peripheral: CBPeripheral, _ name: String) -> CalliopeBLEDevice
 
@@ -83,7 +66,6 @@ class CalliopeBLEDiscovery: NSObject, CBCentralManagerDelegate {
 			if let uuid = connectedCalliope?.peripheral.identifier,
 				let name = discoveredCalliopeUUIDNameMap[uuid] {
 				lastConnected = (uuid, name)
-                setLastInstance()
 			}
 			oldValue?.hasDisconnected()
 			connectedCalliope?.hasConnected()
@@ -130,10 +112,8 @@ class CalliopeBLEDiscovery: NSObject, CBCentralManagerDelegate {
             attemptReconnect()
         }
 		centralManager.delegate = self
-        CalliopeBLEDiscovery.instances.append(self)
-        setLastInstance(false)
-    }
-    
+	}
+
 	private func redetermineState() {
 		if connectedCalliope != nil {
 			state = .connected
@@ -173,7 +153,6 @@ class CalliopeBLEDiscovery: NSObject, CBCentralManagerDelegate {
         self.stopCalliopeDiscovery()
         //we disconnect manually here after switching off delegate, since we don´t want to wipe lastconnected setting
         centralManager.delegate = nil
-        clearLastInstance()
         if let connectedCalliope = self.connectedCalliope {
             self.centralManager.cancelPeripheralConnection(connectedCalliope.peripheral)
         }
