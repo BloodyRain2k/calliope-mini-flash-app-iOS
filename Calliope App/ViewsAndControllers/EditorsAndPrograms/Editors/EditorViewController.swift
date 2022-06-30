@@ -1,6 +1,5 @@
 import UIKit
 import WebKit
-import CoreBluetooth
 
 final class EditorViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
 
@@ -76,9 +75,7 @@ final class EditorViewController: UIViewController, WKNavigationDelegate, WKUIDe
         let request = navigationAction.request
         if let download = editor.download(request) {
             decisionHandler(.cancel)
-            // provoke a reconnect to the Mini with the last entered matrix pattern
-            CalliopeBLEDiscovery.lastInstance?.startCalliopeDiscovery()
-            upload(result: download)
+			upload(result: download)
         } else if editor.isBackNavigation(request) {
 			decisionHandler(.cancel)
 			self.navigationController?.popViewController(animated: true)
