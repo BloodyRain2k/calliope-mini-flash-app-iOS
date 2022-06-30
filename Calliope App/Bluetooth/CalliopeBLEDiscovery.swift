@@ -67,8 +67,10 @@ class CalliopeBLEDiscovery: NSObject, CBCentralManagerDelegate {
 				//manual timeout (system timeout is too long)
 				bluetoothQueue.asyncAfter(deadline: DispatchTime.now() + BluetoothConstants.connectTimeout) {
 					if self.connectedCalliope == nil {
-                        connectingCalliope.state = .offline
-						self.centralManager.cancelPeripheralConnection(connectingCalliope.peripheral)
+                        //connectingCalliope.state = .offline
+                        LogNotify.log("disabling auto connect for \(connectingCalliope.name) (\(connectingCalliope.state))")
+                        connectingCalliope.autoConnect = false
+                        self.centralManager.cancelPeripheralConnection(connectingCalliope.peripheral)
                         self.updateQueue.async { self.errorBlock( NSLocalizedString("Connection to calliope timed out!", comment: "") ) }
 					}
 				}
@@ -136,6 +138,9 @@ class CalliopeBLEDiscovery: NSObject, CBCentralManagerDelegate {
 	private func redetermineState() {
 		if connectedCalliope != nil {
 			state = .connected
+            for calliope in discoveredCalliopes {
+                calliope.value.autoConnect = true
+            }
 		} else if connectingCalliope != nil {
 			state = .connecting
 		} else if centralManager.isScanning {
