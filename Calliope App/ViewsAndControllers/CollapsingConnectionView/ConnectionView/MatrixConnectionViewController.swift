@@ -148,11 +148,11 @@ class MatrixConnectionViewController: UIViewController, CollapsingViewController
 			|| self.calliopeWithCurrentMatrix == nil && self.connector.state == .discoveredAll {
 			connector.startCalliopeDiscovery()
 		} else if let calliope = self.calliopeWithCurrentMatrix {
-            if calliope.state == .discovered || calliope.state == .willReset || calliope.state == .offline {
+            if calliope.state == .discovered || calliope.state == .willReset { //}|| calliope.state == .offline {
                 calliope.updateBlock = updateDiscoveryState
                 calliope.errorBlock = error
 				LogNotify.log("Matrix view connecting to \(calliope)")
-                if calliope.state == .offline { calliope.state = .discovered }
+                //if calliope.state == .offline { calliope.state = .discovered }
                 connector.connectToCalliope(calliope)
 			} else if calliope.state == .connected {
 				calliope.evaluateMode()
@@ -165,7 +165,6 @@ class MatrixConnectionViewController: UIViewController, CollapsingViewController
 	}
 
 	private func updateDiscoveryState() {
-
 		switch self.connector.state {
 		case .initialized:
 			matrixView.isUserInteractionEnabled = true
@@ -189,13 +188,8 @@ class MatrixConnectionViewController: UIViewController, CollapsingViewController
 		case .discoveredAll:
 			if let matchingCalliope = calliopeWithCurrentMatrix {
 				evaluateCalliopeState(matchingCalliope)
-                if connectButton.connectionState == .readyToConnect {
-                    if matchingCalliope.state == .offline {
-                        LogNotify.log("not auto connecting to \(matchingCalliope)")
-                    }
-                    else {
-                        connect()
-                    }
+                if connectButton.connectionState == .readyToConnect && matchingCalliope.autoConnect {
+                    connect()
                 }
 			} else {
 				matrixView.isUserInteractionEnabled = true
@@ -237,7 +231,7 @@ class MatrixConnectionViewController: UIViewController, CollapsingViewController
 		}
 
 		switch calliope.state {
-            case .offline, .discovered:
+            case .discovered: //, .offline:
                 matrixView.isUserInteractionEnabled = !reconnecting
                 connectButton.connectionState = reconnecting ? .testingMode : .readyToConnect
             case .connected:
