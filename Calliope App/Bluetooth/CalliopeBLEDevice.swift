@@ -31,7 +31,6 @@ class CalliopeBLEDevice: NSObject, CBPeripheralDelegate {
 		case usageReady //all required services and characteristics have been found, calliope ready to be programmed
 		case wrongMode //required services and characteristics not available, put into right mode
 		case willReset //when a reset is done to enable or disable services
-        //case offline //was discovered but auto connection failed, used to prevent auto connect dead locks
 	}
 
 	var state : CalliopeBLEDeviceState = .discovered {
