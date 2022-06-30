@@ -148,12 +148,11 @@ class MatrixConnectionViewController: UIViewController, CollapsingViewController
 			|| self.calliopeWithCurrentMatrix == nil && self.connector.state == .discoveredAll {
 			connector.startCalliopeDiscovery()
 		} else if let calliope = self.calliopeWithCurrentMatrix {
-            if calliope.state == .discovered || calliope.state == .willReset { //}|| calliope.state == .offline {
-                calliope.updateBlock = updateDiscoveryState
+			if calliope.state == .discovered || calliope.state == .willReset {
+				calliope.updateBlock = updateDiscoveryState
                 calliope.errorBlock = error
 				LogNotify.log("Matrix view connecting to \(calliope)")
-                //if calliope.state == .offline { calliope.state = .discovered }
-                connector.connectToCalliope(calliope)
+				connector.connectToCalliope(calliope)
 			} else if calliope.state == .connected {
 				calliope.evaluateMode()
 			} else {
@@ -165,6 +164,7 @@ class MatrixConnectionViewController: UIViewController, CollapsingViewController
 	}
 
 	private func updateDiscoveryState() {
+
 		switch self.connector.state {
 		case .initialized:
 			matrixView.isUserInteractionEnabled = true
@@ -231,27 +231,27 @@ class MatrixConnectionViewController: UIViewController, CollapsingViewController
 		}
 
 		switch calliope.state {
-            case .discovered: //, .offline:
-                matrixView.isUserInteractionEnabled = !reconnecting
-                connectButton.connectionState = reconnecting ? .testingMode : .readyToConnect
-            case .connected:
-                reconnecting = false
-                attemptReconnect = false
-                matrixView.isUserInteractionEnabled = false
-                connectButton.connectionState = .testingMode
-            case .evaluateMode:
-                matrixView.isUserInteractionEnabled = false
-                connectButton.connectionState = .testingMode
-            case .usageReady:
-                matrixView.isUserInteractionEnabled = true
-                connectButton.connectionState = .readyToPlay
-            case .wrongMode:
-                matrixView.isUserInteractionEnabled = true
-                connectButton.connectionState = .wrongProgram
-            case .willReset:
-                matrixView.isUserInteractionEnabled = false
-                attemptReconnect = true
-                connectButton.connectionState = .testingMode
+		case .discovered:
+			matrixView.isUserInteractionEnabled = !reconnecting
+			connectButton.connectionState = reconnecting ? .testingMode : .readyToConnect
+		case .connected:
+			reconnecting = false
+			attemptReconnect = false
+			matrixView.isUserInteractionEnabled = false
+			connectButton.connectionState = .testingMode
+		case .evaluateMode:
+			matrixView.isUserInteractionEnabled = false
+			connectButton.connectionState = .testingMode
+		case .usageReady:
+			matrixView.isUserInteractionEnabled = true
+			connectButton.connectionState = .readyToPlay
+		case .wrongMode:
+			matrixView.isUserInteractionEnabled = true
+			connectButton.connectionState = .wrongProgram
+		case .willReset:
+			matrixView.isUserInteractionEnabled = false
+			attemptReconnect = true
+			connectButton.connectionState = .testingMode
 		}
 	}
 

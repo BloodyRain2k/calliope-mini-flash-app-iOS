@@ -41,7 +41,7 @@ class CalliopeBLEDiscovery: NSObject, CBCentralManagerDelegate {
         }
     }
 
-    var calliopeBuilder: (_ peripheral: CBPeripheral, _ name: String) -> CalliopeBLEDevice
+	var calliopeBuilder: (_ peripheral: CBPeripheral, _ name: String) -> CalliopeBLEDevice
 
 	private(set) var state : CalliopeDiscoveryState = .initialized {
 		didSet {
@@ -67,7 +67,6 @@ class CalliopeBLEDiscovery: NSObject, CBCentralManagerDelegate {
 				//manual timeout (system timeout is too long)
 				bluetoothQueue.asyncAfter(deadline: DispatchTime.now() + BluetoothConstants.connectTimeout) {
 					if self.connectedCalliope == nil {
-                        //connectingCalliope.state = .offline
                         LogNotify.log("disabling auto connect for \(connectingCalliope.name) (\(connectingCalliope.state))")
                         connectingCalliope.autoConnect = false
                         self.centralManager.cancelPeripheralConnection(connectingCalliope.peripheral)
