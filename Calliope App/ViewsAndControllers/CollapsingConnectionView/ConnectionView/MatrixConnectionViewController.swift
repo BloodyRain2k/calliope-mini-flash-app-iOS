@@ -206,12 +206,9 @@ class MatrixConnectionViewController: UIViewController, CollapsingViewController
                 if connectButton.connectionState == .readyToConnect && matchingCalliope.autoConnect {
                     connect()
                 }
-<<<<<<< HEAD
-=======
                 else {
                     startDelayedDiscovery()
                 }
->>>>>>> testflight
 			} else {
 				matrixView.isUserInteractionEnabled = true
 				connectButton.connectionState = .notFoundRetry
