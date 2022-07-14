@@ -41,7 +41,9 @@ class MatrixConnectionViewController: UIViewController, CollapsingViewController
 	let expandedWidth: CGFloat = 274
 	let expandedHeight: CGFloat = 430
 
-	private let queue = DispatchQueue(label: "bluetooth")
+    let restoreLastMatrixEnabled = UserDefaults.standard.bool(forKey: SettingsKey.restoreLastMatrix.rawValue)
+
+    private let queue = DispatchQueue(label: "bluetooth")
 
     public var connectionDescriptionText: String = NSLocalizedString("1. Programm 5 starten\n2. Schütteln\n3. LED-Muster eingeben", comment: "") {
         didSet { connectionDescriptionLabel.text = connectionDescriptionText }
@@ -100,7 +102,15 @@ class MatrixConnectionViewController: UIViewController, CollapsingViewController
 			self.connector.disconnectFromCalliope()
 			self.updateDiscoveryState()
 		}
+        restoreLastMatrix()
 	}
+    
+    func restoreLastMatrix(overwrite: Bool = false) {
+        if !restoreLastMatrixEnabled { return }
+        if overwrite || matrixView.isBlank() {
+            matrixView.setMatrixString(pattern: UserDefaults.standard.string(forKey: SettingsKey.lastMatrix.rawValue) ?? "")
+        }
+    }
 
 	override public func viewDidLoad() {
 		super.viewDidLoad()
@@ -142,6 +152,7 @@ class MatrixConnectionViewController: UIViewController, CollapsingViewController
 
 	private var attemptReconnect = false
 	private var reconnecting = false
+    private var delayedDiscovery = false
 
 	@IBAction func connect() {
 		if self.connector.state == .initialized
@@ -170,6 +181,10 @@ class MatrixConnectionViewController: UIViewController, CollapsingViewController
 			matrixView.isUserInteractionEnabled = true
 			connectButton.connectionState = .initialized
 			self.collapseButton.connectionState = .disconnected
+            restoreLastMatrix()
+            if !matrixView.isBlank() {
+                startDelayedDiscovery()
+            }
 		case .discoveryWaitingForBluetooth:
 			matrixView.isUserInteractionEnabled = true
 			connectButton.connectionState = .waitingForBluetooth
@@ -191,11 +206,18 @@ class MatrixConnectionViewController: UIViewController, CollapsingViewController
                 if connectButton.connectionState == .readyToConnect && matchingCalliope.autoConnect {
                     connect()
                 }
+<<<<<<< HEAD
+=======
+                else {
+                    startDelayedDiscovery()
+                }
+>>>>>>> testflight
 			} else {
 				matrixView.isUserInteractionEnabled = true
 				connectButton.connectionState = .notFoundRetry
 				self.collapseButton.connectionState = .disconnected
-			}
+                startDelayedDiscovery()
+            }
 		case .connecting:
 			matrixView.isUserInteractionEnabled = false
 			attemptReconnect = false
@@ -211,6 +233,20 @@ class MatrixConnectionViewController: UIViewController, CollapsingViewController
 			evaluateCalliopeState(calliopeWithCurrentMatrix!)
 		}
 	}
+    
+    private func startDelayedDiscovery() {
+        if delayedDiscovery { return }
+        delayedDiscovery = true
+        
+        LogNotify.log("adding delayed discovery to queue")
+        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(5)) {
+            self.delayedDiscovery = false
+            if !self.matrixView.isBlank() && (self.connector.state == .initialized ||
+                self.connector.state == .discoveredAll && self.connectButton.connectionState != .readyToPlay) {
+                self.connector.startCalliopeDiscovery()
+            }
+        }
+    }
 
 	private func evaluateCalliopeState(_ calliope: CalliopeBLEDevice) {
 
@@ -218,6 +254,8 @@ class MatrixConnectionViewController: UIViewController, CollapsingViewController
 			self.collapseButton.connectionState = attemptReconnect || reconnecting ? .connecting : .disconnected
 		} else if calliope.state == .usageReady {
 			self.collapseButton.connectionState = .connected
+            LogNotify.log("last pattern:\r\(matrixView.getMatrixString())")
+            UserDefaults.standard.set(matrixView.getMatrixString(), forKey: SettingsKey.lastMatrix.rawValue)
 		} else {
 			self.collapseButton.connectionState = .connecting
 		}
